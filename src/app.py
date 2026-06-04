@@ -98,8 +98,10 @@ with st.sidebar:
                    "it across the chat. e.g. \"I'm a Brazil fan\" or "
                    "\"I love the 1990s\".")
     else:
-        if prefs.favorite_team:
-            st.markdown(f"⚽ Favorite team: **{prefs.favorite_team}**")
+        if prefs.favorite_teams:
+            teams_str = ", ".join(f"**{t}**" for t in prefs.favorite_teams)
+            label = "Favorite team" if len(prefs.favorite_teams) == 1 else "Favorite teams"
+            st.markdown(f"⚽ {label}: {teams_str}")
         if prefs.era_focus:
             st.markdown(f"📅 Era focus: **{prefs.era_focus}**")
         if st.button("Reset preferences", use_container_width=True):
@@ -115,10 +117,24 @@ with st.sidebar:
 chat_col, trace_col = st.columns([2, 1])
 
 
+SCORER_KEYWORDS = (
+    "top scorer", "top scorers", "scorer", "scorers",
+    "goal scorer", "leading scorer", "best scorer", "all time top",
+    "most goals", "highest scorer",
+)
+
+
+def _is_scorer_query(query: str, answer: str) -> bool:
+    text = (query + " " + answer).lower()
+    return any(k in text for k in SCORER_KEYWORDS)
+
+
 def render_visual_for(query: str, answer: str = "") -> None:
     """If the query or answer maps to a known visual, render it."""
     if not query:
         return
+    prefs = st.session_state.preferences
+
     # 1. Match goals: 'TeamA vs TeamB YYYY' or 'goals from X vs Y YYYY'
     match_info = parse_match_goals_query(query)
     if match_info:
@@ -140,10 +156,17 @@ def render_visual_for(query: str, answer: str = "") -> None:
         if fig is not None:
             st.pyplot(fig)
             return
-    # 4. Single team mention (query first, fall back to answer)
-    team = parse_team_query(query) or parse_team_query(answer)
-    if team:
-        fig = top_scorers_chart(team)
+    # 4. Scorer-style query → top scorers chart
+    if _is_scorer_query(query, answer):
+        team = parse_team_query(query) or parse_team_query(answer)
+        if team:
+            fig = top_scorers_chart(team)
+            if fig is not None:
+                st.pyplot(fig)
+                return
+    # 5. User has 2+ favorite teams and asked something vague → h2h between them
+    if len(prefs.favorite_teams) >= 2:
+        fig = head_to_head_chart(prefs.favorite_teams[0], prefs.favorite_teams[1])
         if fig is not None:
             st.pyplot(fig)
 
