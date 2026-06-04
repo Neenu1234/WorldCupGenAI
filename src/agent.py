@@ -11,6 +11,7 @@ from src import config
 from src.tools.rag_tool import world_cup_rag
 from src.tools.prediction_tool import predict_match
 from src.tools.stats_tool import team_stats
+from src.tools.goals_tool import match_goals
 
 
 AGENT_PROMPT = PromptTemplate.from_template(
@@ -22,7 +23,8 @@ Tools available:
 Tool routing:
 - Use WorldCupRAG for history, finals, scores.
 - Use TeamStats for titles, win rate, top scorers of one team.
-- Use MatchPredictor for "TeamA vs TeamB" prediction.
+- Use MatchPredictor for "TeamA vs TeamB" prediction (no year given).
+- Use MatchGoals for "show me goals from TeamA vs TeamB YYYY" (year given).
 
 Conversation history (for pronouns like "they" or "them"):
 {chat_history}
@@ -69,6 +71,14 @@ def build_tools() -> list[Tool]:
             description=(
                 "Returns numerical stats for a national team: total matches, "
                 "win rate, World Cup titles, top scorers. Input: a team name."
+            ),
+        ),
+        Tool(
+            name="MatchGoals",
+            func=match_goals,
+            description=(
+                "Returns goal by goal breakdown of a specific historical match. "
+                "Input format: 'TeamA vs TeamB YYYY' (must include a year)."
             ),
         ),
     ]
