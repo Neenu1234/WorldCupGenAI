@@ -10,7 +10,7 @@ User question
      v
 ReAct Agent (gpt-4o)
   + ConversationBufferMemory (chat history)
-  + UserPreferences memory (favorite team, era focus)
+  + UserPreferences memory (favorite teams, era focus)
      |
      +--> Tool 1: WorldCupRAG     (Chroma + OpenAI embeddings on match docs)
      +--> Tool 2: MatchPredictor  (pandas head to head + recent form + LLM)
@@ -46,10 +46,12 @@ Two persistent memory layers per session:
 1. **`ConversationBufferMemory`** (`memory_key='chat_history'`) wired into the AgentExecutor. Enables follow ups like "and Brazil?" after asking about Germany.
 
 2. **`UserPreferences`** (`src/preferences.py`) auto-detects and persists at least two user preferences across the session:
-   - `favorite_team`: detected from triggers like "I'm a Brazil fan", "I support Argentina", "my favorite team is..."
+   - `favorite_teams`: list of one or more teams the user follows. Detected from natural phrasings in either direction:
+     - **Phrase first:** "I'm a Brazil fan", "I support Germany", "my favorite team is Italy"
+     - **Team first:** "Brazil is my favorite team", "Brazil and Argentina are my favorite teams"
    - `era_focus`: detected from decades ("1990s", "2010s") or era phrases ("modern era", "classic era")
 
-   Preferences are injected into the agent's input prompt as a header so answers stay personalized. The sidebar shows the live preference state.
+   Preferences are injected into the agent's input prompt as a header so answers stay personalized. The sidebar shows the live preference state. When the user has 2+ favorite teams and asks a vague question, the UI falls back to a head-to-head chart between the first two favorite teams.
 
 ## Data Source
 
