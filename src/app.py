@@ -9,8 +9,19 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import streamlit as st
 
+from src import config
 from src.agent import build_agent
 from src.preferences import UserPreferences, detect_preferences
+from src.vector_store import build_vector_store
+
+
+def _ensure_vector_store() -> None:
+    """Build the Chroma store on first launch (needed for Streamlit Cloud)."""
+    if config.CHROMA_DIR.exists() and any(config.CHROMA_DIR.iterdir()):
+        return
+    with st.spinner("First-time setup: indexing 964 World Cup matches "
+                    "(about 2 minutes, only happens once)..."):
+        build_vector_store()
 from src.visuals import (
     head_to_head_chart,
     top_scorers_chart,
@@ -66,6 +77,7 @@ st.caption("LangChain agent for World Cup history, stats, and match predictions"
 
 
 if "agent" not in st.session_state:
+    _ensure_vector_store()
     st.session_state.agent = build_agent()
 if "messages" not in st.session_state:
     st.session_state.messages = []

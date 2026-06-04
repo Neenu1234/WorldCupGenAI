@@ -1,9 +1,19 @@
 """Shared configuration. Edit values here, not in individual files."""
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Auto-load .env from project root so any module that imports config has the key.
+# Local dev: load .env from project root.
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+# Streamlit Cloud: copy the secret into the environment if present, so
+# downstream libraries (OpenAI, langchain) pick it up the same way.
+try:
+    import streamlit as st  # noqa: F401
+    if hasattr(st, "secrets") and "OPENAI_API_KEY" in st.secrets:
+        os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
+except Exception:
+    pass
 
 # Paths
 ROOT_DIR = Path(__file__).resolve().parent.parent
