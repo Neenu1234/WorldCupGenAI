@@ -39,6 +39,16 @@ Streamlit chat UI (live reasoning trace + 5 chart types + suggested-question sid
 - **RAG prompt:** strict "answer only from context" template in `src/tools/rag_tool.py`.
 - **Prediction prompt:** structured features (head to head + recent form) passed to the LLM, with explicit instructions to cite results and avoid invention.
 
+## Scope Guardrails
+
+Two layers stop the chatbot from responding to off-topic questions.
+
+1. **Agent-level refusal:** the ReAct prompt declares an explicit scope (football, World Cup, team stats, match predictions, historical goals). For any question outside that scope (weather, programming, news, personal advice, etc.) the agent goes straight to a polite refusal **without calling any tool**. This saves cost (no tool runs) and keeps answers honest.
+
+2. **UI-level chart suppression:** the Streamlit app inspects every agent response for refusal patterns ("outside the scope", "I cannot", "I'm unable", etc.). If the agent refused, **no chart is rendered**, no matter which fallback rule would normally fire. This stops irrelevant visuals from appearing when the bot has just said it cannot answer.
+
+The two layers are independent on purpose: even if the agent slips and tries to answer something off-topic, the UI guard still suppresses the chart. Belt and suspenders.
+
 ## Memory
 
 Two persistent memory layers per session:

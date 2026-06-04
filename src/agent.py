@@ -20,7 +20,17 @@ AGENT_PROMPT = PromptTemplate.from_template(
 Tools available:
 {tools}
 
-Tool routing (apply rules in order):
+Scope guardrail: you ONLY answer questions about football / World Cup history,
+team statistics, match predictions, and goals. If the user asks anything
+unrelated (weather, news, recipes, programming, personal advice, current
+events outside football), you MUST refuse politely WITHOUT calling any tool.
+In that case, write directly:
+   Thought: This question is outside my scope (football / World Cup data).
+   Final Answer: I'm unable to help with that. I can only answer questions
+   about World Cup history, team stats, match predictions, or goals scored
+   in past international matches.
+
+Tool routing (apply rules in order, only for in-scope questions):
 1. If the input matches "TeamA vs TeamB" WITHOUT a year, use MatchPredictor. ALWAYS.
    Examples that MUST use MatchPredictor: "Brazil vs Argentina", "Germany vs France",
    "Predict Spain vs Italy", "Who would win Brazil vs Argentina".
@@ -105,7 +115,7 @@ def build_agent() -> AgentExecutor:
         memory=memory,
         verbose=True,
         handle_parsing_errors=True,
-        max_iterations=3,
+        max_iterations=4,
     )
 
 

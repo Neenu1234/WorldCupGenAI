@@ -364,15 +364,19 @@ innovations = [
      "and Argentina 2022 are correctly attributed."),
     ("Suggested questions sidebar + Surprise me button",
      "Onboarding for new users, ready made demo prompts for judges."),
+    ("Two-layer scope guardrails",
+     "Agent refuses off-topic questions (weather, news, etc.) without calling "
+     "any tool. UI also suppresses charts on refusals so the visual never "
+     "contradicts a 'cannot answer' response."),
 ]
 
 for i, (title, body) in enumerate(innovations):
-    y = Inches(1.3 + i * 1.1)
-    add_filled_rect(s, Inches(0.6), y, Inches(0.25), Inches(0.9), ACCENT)
+    y = Inches(1.2 + i * 0.95)
+    add_filled_rect(s, Inches(0.6), y, Inches(0.25), Inches(0.8), ACCENT)
     add_text(s, Inches(1.0), y, Inches(11.7), Inches(0.4),
-             title, font_size=17, bold=True, color=NAVY)
-    add_text(s, Inches(1.0), y + Inches(0.4), Inches(11.7), Inches(0.6),
-             body, font_size=13, color=DARK_TEXT)
+             title, font_size=15, bold=True, color=NAVY)
+    add_text(s, Inches(1.0), y + Inches(0.38), Inches(11.7), Inches(0.55),
+             body, font_size=12, color=DARK_TEXT)
 add_notes(s,
     "Quick run through what makes us different. The explainability panel, "
     "the auto-rendered charts, and the preferences memory are the three "

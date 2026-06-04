@@ -141,6 +141,31 @@ RECORD_KEYWORDS = (
     "how have they", "how is", "tell me about",
 )
 
+REFUSAL_PATTERNS = (
+    "outside the scope",
+    "outside my scope",
+    "unable to provide",
+    "i'm unable",
+    "i am unable",
+    "i cannot",
+    "i can't",
+    "i do not have",
+    "i don't have",
+    "not within my",
+    "beyond the scope",
+    "not related to",
+    "not in this dataset",
+    "i cannot help with",
+    "i'm sorry",
+)
+
+
+def _is_refusal(answer: str) -> bool:
+    """True if the agent refused or said the question is off-topic."""
+    if not answer:
+        return False
+    return any(p in answer.lower() for p in REFUSAL_PATTERNS)
+
 
 def _is_scorer_query(query: str) -> bool:
     """Check ONLY the user's query (not the AI answer) for scorer keywords.
@@ -157,8 +182,15 @@ def _is_record_query(query: str) -> bool:
 
 
 def render_visual_for(query: str, answer: str = "") -> None:
-    """If the query or answer maps to a known visual, render it."""
+    """If the query or answer maps to a known visual, render it.
+
+    Guard rail: if the agent refused or said the query is off-topic, render
+    nothing. This prevents showing a chart for a question the bot did not
+    actually answer (e.g. 'what is today's weather?').
+    """
     if not query:
+        return
+    if _is_refusal(answer):
         return
     prefs = st.session_state.preferences
 
@@ -216,11 +248,17 @@ def process_query(prompt: str) -> None:
     agent_input = f"{pref_string}\n{prompt}" if pref_string else prompt
 
     st.session_state.messages.append({"role": "user", "content": prompt})
+
+    # Show the user message immediately, then a spinner while the agent works.
+    with st.chat_message("user"):
+        st.markdown(prompt)
+
     buf = io.StringIO()
     old_stdout = sys.stdout
     sys.stdout = buf
     try:
-        result = st.session_state.agent.invoke({"input": agent_input})
+        with st.spinner("Thinking… picking the right tool and gathering evidence"):
+            result = st.session_state.agent.invoke({"input": agent_input})
         answer = result["output"]
     finally:
         sys.stdout = old_stdout
