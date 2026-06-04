@@ -21,7 +21,7 @@ ReAct Agent (gpt-4o)
 Final Answer (with evidence + limitations)
      |
      v
-Streamlit chat UI (live reasoning trace + 4 chart types + suggested-question sidebar)
+Streamlit chat UI (live reasoning trace + 5 chart types + suggested-question sidebar)
 ```
 
 ## Tools

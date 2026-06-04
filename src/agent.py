@@ -20,11 +20,15 @@ AGENT_PROMPT = PromptTemplate.from_template(
 Tools available:
 {tools}
 
-Tool routing:
-- Use WorldCupRAG for history, finals, scores.
-- Use TeamStats for titles, win rate, top scorers of one team.
-- Use MatchPredictor for "TeamA vs TeamB" prediction (no year given).
-- Use MatchGoals for "show me goals from TeamA vs TeamB YYYY" (year given).
+Tool routing (apply rules in order):
+1. If the input matches "TeamA vs TeamB" WITHOUT a year, use MatchPredictor. ALWAYS.
+   Examples that MUST use MatchPredictor: "Brazil vs Argentina", "Germany vs France",
+   "Predict Spain vs Italy", "Who would win Brazil vs Argentina".
+2. If the input matches "TeamA vs TeamB YYYY" WITH a year, use MatchGoals.
+   Example: "Show goals from Germany vs Brazil 2014".
+3. If the input asks about one team's titles, win rate, or top scorers, use TeamStats.
+4. Otherwise, for any question about World Cup history, finals, or specific past matches,
+   use WorldCupRAG.
 
 Conversation history (for pronouns like "they" or "them"):
 {chat_history}
@@ -53,16 +57,20 @@ def build_tools() -> list[Tool]:
             name="WorldCupRAG",
             func=world_cup_rag,
             description=(
-                "Answers natural language questions about World Cup history, "
-                "matches, scores, and tournaments. Input: a question string."
+                "Answers QUESTIONS about World Cup history, finals, and specific "
+                "past matches (e.g. 'Who won 2014?'). Do NOT use this for inputs "
+                "shaped like 'TeamA vs TeamB' — use MatchPredictor for those. "
+                "Input: a question string."
             ),
         ),
         Tool(
             name="MatchPredictor",
             func=predict_match,
             description=(
-                "Predicts the outcome of a match between two national teams. "
-                "Input format must be exactly: 'TeamA vs TeamB'."
+                "USE THIS for any input shaped like 'TeamA vs TeamB' without a year. "
+                "Returns head to head record, recent form, and a predicted score. "
+                "Always pick this tool when the user names two teams with no year. "
+                "Input format: 'TeamA vs TeamB'."
             ),
         ),
         Tool(

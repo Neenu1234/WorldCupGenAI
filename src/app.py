@@ -25,6 +25,7 @@ def _ensure_vector_store() -> None:
 from src.visuals import (
     head_to_head_chart,
     top_scorers_chart,
+    team_record_chart,
     wc_titles_ranking_chart,
     match_goals_timeline_chart,
     is_ranking_query,
@@ -135,10 +136,24 @@ SCORER_KEYWORDS = (
     "most goals", "highest scorer",
 )
 
+RECORD_KEYWORDS = (
+    "record", "win rate", "stats", "statistics", "performance",
+    "how have they", "how is", "tell me about",
+)
 
-def _is_scorer_query(query: str, answer: str) -> bool:
-    text = (query + " " + answer).lower()
-    return any(k in text for k in SCORER_KEYWORDS)
+
+def _is_scorer_query(query: str) -> bool:
+    """Check ONLY the user's query (not the AI answer) for scorer keywords.
+
+    Looking at the answer caused false positives — e.g. asking 'Italy's record'
+    returned an answer that mentioned top scorers, which then triggered the
+    top-scorers chart even though the user did not ask for it.
+    """
+    return any(k in query.lower() for k in SCORER_KEYWORDS)
+
+
+def _is_record_query(query: str) -> bool:
+    return any(k in query.lower() for k in RECORD_KEYWORDS)
 
 
 def render_visual_for(query: str, answer: str = "") -> None:
@@ -168,15 +183,23 @@ def render_visual_for(query: str, answer: str = "") -> None:
         if fig is not None:
             st.pyplot(fig)
             return
-    # 4. Scorer-style query → top scorers chart
-    if _is_scorer_query(query, answer):
+    # 4. Scorer-style query → top scorers chart (check QUERY only, not answer)
+    if _is_scorer_query(query):
         team = parse_team_query(query) or parse_team_query(answer)
         if team:
             fig = top_scorers_chart(team)
             if fig is not None:
                 st.pyplot(fig)
                 return
-    # 5. User has 2+ favorite teams and asked something vague → h2h between them
+    # 5. Record / stats query about one team → win/draw/loss chart
+    if _is_record_query(query):
+        team = parse_team_query(query) or parse_team_query(answer)
+        if team:
+            fig = team_record_chart(team)
+            if fig is not None:
+                st.pyplot(fig)
+                return
+    # 6. User has 2+ favorite teams and asked something vague → h2h between them
     if len(prefs.favorite_teams) >= 2:
         fig = head_to_head_chart(prefs.favorite_teams[0], prefs.favorite_teams[1])
         if fig is not None:

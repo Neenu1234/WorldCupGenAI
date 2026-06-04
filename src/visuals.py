@@ -19,41 +19,98 @@ def _h2h(df: pd.DataFrame, a: str, b: str) -> pd.DataFrame:
     return df[mask].sort_values("date")
 
 
-def head_to_head_chart(team_a: str, team_b: str):
-    """Bar chart of wins/draws/losses between two teams. Returns matplotlib Figure or None."""
+def _count_results(rows: pd.DataFrame, team_a: str, team_b: str) -> tuple[int, int, int]:
+    """Return (a_wins, draws, b_wins) across the given rows."""
+    a_wins = sum(
+        (r["home_team"] == team_a and r["home_score"] > r["away_score"])
+        or (r["away_team"] == team_a and r["away_score"] > r["home_score"])
+        for _, r in rows.iterrows()
+    )
+    b_wins = sum(
+        (r["home_team"] == team_b and r["home_score"] > r["away_score"])
+        or (r["away_team"] == team_b and r["away_score"] > r["home_score"])
+        for _, r in rows.iterrows()
+    )
+    draws = len(rows) - a_wins - b_wins
+    return a_wins, draws, b_wins
+
+
+def head_to_head_chart(team_a: str, team_b: str, recent_n: int = 10):
+    """Grouped bar chart: all-time vs last N matches between the two teams."""
+    import numpy as np
     df = load_results()
     h = _h2h(df, team_a, team_b)
     if h.empty:
         return None
 
-    a_wins = sum(
-        (r["home_team"] == team_a and r["home_score"] > r["away_score"])
-        or (r["away_team"] == team_a and r["away_score"] > r["home_score"])
-        for _, r in h.iterrows()
+    all_a, all_d, all_b = _count_results(h, team_a, team_b)
+    recent = h.tail(recent_n)
+    rec_a, rec_d, rec_b = _count_results(recent, team_a, team_b)
+
+    labels = [f"{team_a} wins", "Draws", f"{team_b} wins"]
+    all_values = [all_a, all_d, all_b]
+    rec_values = [rec_a, rec_d, rec_b]
+    colors_all = ["#1e88e5", "#9e9e9e", "#e53935"]
+    colors_rec = ["#0d47a1", "#424242", "#b71c1c"]
+
+    fig, ax = plt.subplots(figsize=(9, 4.5))
+    x = np.arange(len(labels))
+    width = 0.38
+    bars1 = ax.bar(x - width / 2, all_values, width,
+                   label=f"All time ({len(h)} matches)",
+                   color=colors_all, edgecolor="white")
+    bars2 = ax.bar(x + width / 2, rec_values, width,
+                   label=f"Last {len(recent)} matches",
+                   color=colors_rec, edgecolor="white")
+    for bar_group in (bars1, bars2):
+        for bar in bar_group:
+            v = bar.get_height()
+            ax.text(bar.get_x() + bar.get_width() / 2, v + 0.1, str(int(v)),
+                    ha="center", fontweight="bold", fontsize=11)
+
+    ax.set_xticks(x)
+    ax.set_xticklabels(labels)
+    ax.set_ylabel("Number of matches")
+    ax.set_title(f"{team_a} vs {team_b}: all time and recent form", fontsize=13)
+    ax.legend(loc="upper right", fontsize=10)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    plt.tight_layout()
+    return fig
+
+
+def team_record_chart(team: str):
+    """Win / Draw / Loss bar chart for a single team across all matches."""
+    df = load_results()
+    team_df = df[(df["home_team"] == team) | (df["away_team"] == team)]
+    if team_df.empty:
+        return None
+
+    wins = sum(
+        (r["home_team"] == team and r["home_score"] > r["away_score"])
+        or (r["away_team"] == team and r["away_score"] > r["home_score"])
+        for _, r in team_df.iterrows()
     )
-    b_wins = sum(
-        (r["home_team"] == team_b and r["home_score"] > r["away_score"])
-        or (r["away_team"] == team_b and r["away_score"] > r["home_score"])
-        for _, r in h.iterrows()
+    losses = sum(
+        (r["home_team"] == team and r["home_score"] < r["away_score"])
+        or (r["away_team"] == team and r["away_score"] < r["home_score"])
+        for _, r in team_df.iterrows()
     )
-    draws = len(h) - a_wins - b_wins
+    draws = len(team_df) - wins - losses
+    total = len(team_df)
+    win_rate = wins / total * 100 if total else 0
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    labels = [f"{team_a} wins", "Draws", f"{team_b} wins"]
-    values = [a_wins, draws, b_wins]
-    colors = ["#1e88e5", "#9e9e9e", "#e53935"]
-    bars = ax.bar(labels, values, color=colors)
-    ax.set_title(f"Head to head: {team_a} vs {team_b} ({len(h)} matches total)", fontsize=13)
-    ax.set_ylabel("Number of matches")
+    labels = ["Wins", "Draws", "Losses"]
+    values = [wins, draws, losses]
+    colors = ["#2e7d32", "#9e9e9e", "#c62828"]
+    bars = ax.bar(labels, values, color=colors, edgecolor="white")
     for bar, v in zip(bars, values):
-        ax.text(
-            bar.get_x() + bar.get_width() / 2,
-            v + 0.1,
-            str(v),
-            ha="center",
-            fontweight="bold",
-            fontsize=12,
-        )
+        ax.text(bar.get_x() + bar.get_width() / 2, v + total * 0.01,
+                f"{v}", ha="center", fontweight="bold", fontsize=12)
+    ax.set_title(f"{team} record: {total:,} international matches  ·  win rate {win_rate:.1f}%",
+                 fontsize=13)
+    ax.set_ylabel("Number of matches")
     ax.spines["top"].set_visible(False)
     ax.spines["right"].set_visible(False)
     plt.tight_layout()
