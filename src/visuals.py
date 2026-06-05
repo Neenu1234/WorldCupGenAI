@@ -245,11 +245,14 @@ def wc_titles_ranking_chart():
 
 
 def is_ranking_query(query: str) -> bool:
-    """Detect queries like 'most winning team', 'best team', 'rank by titles'."""
+    """Detect queries like 'most winning team', 'best team', 'rank by titles',
+    or any 'how many titles does X have' question (also a titles-ranking topic)."""
     q = query.lower()
     triggers = ["most winning", "most successful", "most titles", "best team",
                 "top team", "rank", "all winners", "world cup winners",
-                "which teams won", "who has the most"]
+                "which teams won", "who has the most",
+                "how many titles", "how many world cup titles",
+                "how many world cups", "world cup titles"]
     return any(t in q for t in triggers)
 
 
@@ -305,9 +308,17 @@ def parse_prediction_query(query: str) -> tuple[str, str] | None:
             for prefix in ["predict ", "who will win ", "who would win ",
                            "what is your prediction for ", "match preview for ",
                            "show goals from ", "show me goals from ",
-                           "goals from ", "show me the goals from "]:
+                           "goals from ", "show me the goals from ",
+                           "what happened in ", "what happened during ",
+                           "tell me about ", "the match between "]:
                 if left.lower().startswith(prefix):
                     left = left[len(prefix):].strip()
+            # Strip stage suffix words from the right side (Final, Semi-final, etc.)
+            for suffix in [" semifinal", " semi-final", " semi final",
+                           " final", " quarterfinal", " quarter-final",
+                           " quarter final", " group stage"]:
+                if right.lower().endswith(suffix):
+                    right = right[: -len(suffix)].strip()
             if left and right:
                 return left, right
     return None

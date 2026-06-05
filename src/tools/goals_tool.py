@@ -23,7 +23,8 @@ def _find_match(year: int, team_a: str, team_b: str) -> pd.Series | None:
 
 def match_goals(query: str) -> str:
     """Input format: '<TeamA> vs <TeamB> <YYYY>' e.g. 'Germany vs Brazil 2014'."""
-    parts = query.strip().split()
+    query = query.strip().strip('"').strip("'")
+    parts = query.split()
     year = None
     for p in parts:
         if p.isdigit() and 1900 < int(p) < 2100:

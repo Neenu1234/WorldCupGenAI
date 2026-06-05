@@ -51,6 +51,7 @@ def _h2h(df: pd.DataFrame, a: str, b: str) -> pd.DataFrame:
 
 
 def predict_match(query: str) -> str:
+    query = query.strip().strip('"').strip("'")
     if " vs " not in query.lower():
         return ToolOutput(
             answer="Could not parse teams. Use format: TeamA vs TeamB.",

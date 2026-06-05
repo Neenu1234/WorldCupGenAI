@@ -39,7 +39,7 @@ def _wc_titles(df: pd.DataFrame, team: str) -> list[int]:
 
 
 def team_stats(team: str) -> str:
-    team = team.strip()
+    team = team.strip().strip('"').strip("'")
     df = load_results()
     team_df = _team_matches(df, team)
 

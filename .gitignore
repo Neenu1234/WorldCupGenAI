@@ -10,3 +10,4 @@ venv/
 # Files kept locally but not tracked in git
 DEMO_SCRIPT.md
 WorldCupGenAI_Slides.pptx
+make_slides.py

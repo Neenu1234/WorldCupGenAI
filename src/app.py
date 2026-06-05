@@ -231,11 +231,26 @@ def render_visual_for(query: str, answer: str = "") -> None:
             if fig is not None:
                 st.pyplot(fig)
                 return
-    # 6. User has 2+ favorite teams and asked something vague → h2h between them
+    # 6. User has 2+ favorite teams → h2h between favorites.
+    # Fire ONLY when the query is genuinely about "them":
+    # - no specific year is in the query
+    # - no UNRELATED team is mentioned
+    # - query uses a pronoun (their / them / they) OR mentions favorites
+    #   together with a pronoun-style follow-up
     if len(prefs.favorite_teams) >= 2:
-        fig = head_to_head_chart(prefs.favorite_teams[0], prefs.favorite_teams[1])
-        if fig is not None:
-            st.pyplot(fig)
+        import re
+        has_year = bool(re.search(r"\b(19|20)\d{2}\b", query))
+        mentioned_team = parse_team_query(query)
+        mentioned_unrelated = (
+            mentioned_team is not None
+            and mentioned_team not in prefs.favorite_teams
+        )
+        q_lower = " " + query.lower() + " "
+        has_pronoun = any(p in q_lower for p in (" their ", " them ", " they "))
+        if not has_year and not mentioned_unrelated and has_pronoun:
+            fig = head_to_head_chart(prefs.favorite_teams[0], prefs.favorite_teams[1])
+            if fig is not None:
+                st.pyplot(fig)
 
 
 def process_query(prompt: str) -> None:
