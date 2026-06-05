@@ -150,3 +150,13 @@ streamlit run src/app.py
 - Predictions are based only on historical results and recent form, not tactical or fitness data.
 - Player level metadata (xG, positions, heatmaps) is not in this dataset. StatsBomb integration remains a planned stretch goal.
 - Goal scorer records depend on tournament organisers reporting; older matches may have incomplete scorer data.
+
+## Team & Contributions
+
+| Phase | Owner | What it covers |
+|---|---|---|
+| 1. Brainstorming & Planning | All 3 jointly | Track selection, dataset choice, tech stack, tool boundaries |
+| 2. Data Layer | Sayee | EDA notebook, data validation, README data section |
+| 3. LangChain Pipeline | Neenu | ReAct agent, 4 tools, vector store, memory, guardrails |
+| 4. UI, Visualization & Innovation | Abhishek | Streamlit chat UI, 5 chart types, sidebar, agent reasoning panel |
+| 5. Presentation & Submission | All 3 jointly | Slides + Video |
