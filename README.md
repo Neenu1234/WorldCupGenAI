@@ -30,8 +30,10 @@ Streamlit chat UI (live reasoning trace + 5 chart types + suggested-question sid
 |---|---|---|---|
 | WorldCupRAG | RAG over historical World Cup matches | natural language question | answer + retrieved match docs |
 | MatchPredictor | Predict outcome between two teams | "TeamA vs TeamB" | preview + predicted outcome + limitations |
+|EnhancedGenAI|Synthesizes outputs from RAG, prediction, and statistics tools while incorporating user preferences and conversation history|user query + tool results + memory|contextualized response with insights, recommendations, and explanations|
 | TeamStats | Structured stats lookup for one team | team name | titles, win rate, top scorers |
 | MatchGoals | Goal by goal breakdown of one historical match | "TeamA vs TeamB YYYY" | scorer list + minutes + own goals/penalties |
+
 
 ## Prompts
 
